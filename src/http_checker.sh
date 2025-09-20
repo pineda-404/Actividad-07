@@ -12,7 +12,7 @@ check_http() {
     http_response=$(curl -Is "$url" || true)
 
     local evidence_file
-    evidence_file=$(mktemp out/http_check_XXXXXX.txt)
+    evidence_file=$(mktemp ../out/http_check_XXXXXX.txt)
     echo "--- Evidencia HTTP para $url ---" >"$evidence_file"
     echo "$http_response" >>"$evidence_file"
     log_info "Evidencia HTTP guardada en: $evidence_file"

@@ -11,7 +11,8 @@ check_dns() {
     dns_response=$(dig A "$domain" +noall +answer || true)
 
     local evidence_file
-    evidence_file=$(mktemp out/dns_check_XXXXXX.txt)
+    evidence_file=$(mktemp ../out/dns_check_XXXXXX.txt)
+
     echo "--- Evidencia DNS (Registro A) para $domain ---" >"$evidence_file"
     echo "$dns_response" >>"$evidence_file"
     log_info "Evidencia DNS guardada en: $evidence_file"
