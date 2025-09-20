@@ -3,40 +3,42 @@
 **Proyecto:** 9 - Integrador de checks de seguridad en pipelines  
 **Equipo:** Diego Pineda García, Mateo Torres Fuero
 
-**Video Sprint 2:** [URL del video pendiente]
+**Video Sprint 2:** https://youtu.be/h-RxShijzHQ
 
 ---
 
 ## Objetivos del Sprint 2
 
 - Implementar checks TLS completos con verificación de certificados
-- Agregar diagnóstico de red para distinguir problemas de infraestructura vs seguridad
-- Expandir tests Bats con casos de fallo reales
-- Implementar uso de variables de entorno desde .env
-- Configurar servicio systemd para ejecución automatizada
-- Mejorar pipeline con herramientas Unix básicas (grep, awk, sed, cut)
+- Desarrollar diagnóstico de red con herramientas Unix (ip, ss, ping, nslookup)
+- Corregir bugs identificados en Sprint 1
+- Integrar variables de entorno desde .env
+- Aplicar pipelines Unix para procesamiento de datos (grep, awk, sed, cut)
+- Implementar bash robusto con manejo de errores y trap
 
 ---
 
 ## División de Responsabilidades
 
-### Alumno 1: Diego Pineda - Funcionalidades principales
+### Alumno 1: Diego Pineda - Scripts Bash y funcionalidades principales
 
 - **Rama:** `scripts/diego-pineda`
 - **Responsabilidades:**
-  - Implementación de `tls_checker.sh` completo
+  - Implementación completa de `tls_checker.sh`
   - Desarrollo de funciones de diagnóstico de red en `utils.sh`
-  - Corrección de bugs en `http_checker.sh`
-  - Integración de variables de entorno `.env`
+  - Corrección de bugs críticos en `http_checker.sh`
+  - Integración robusta de variables de entorno `.env`
+  - Aplicación de pipelines Unix en procesamiento
 
-### Alumno 2: Mateo Torres - Automatización y Testing
+### Alumno 2: Mateo Torres - Herramientas de red y testing
 
-- **Rama:** `Makefile/MateoTorres`
+- **Rama:** `network-tools/MateoTorres`
 - **Responsabilidades:**
-  - Expansión de tests Bats con casos de fallo
-  - Mejora del Makefile con nuevos targets
-  - Documentación técnica (README.md, guia-ejecucion.md)
-  - Configuración de servicio systemd
+  - Implementación de herramientas de red (ip, ss, nc)
+  - Desarrollo de funciones de diagnóstico avanzado
+  - Mejoras en robustez de scripts (trap, cleanup)
+  - Validación de configuraciones de red
+  - Testing manual de casos de fallo
 
 ---
 
@@ -78,42 +80,88 @@ TARGET_URL="https://www.google.com" ./security_checker.sh
 
 ---
 
-### 2. Diagnóstico de Red [DiegoPineda]
+### 2. Diagnóstico de Red con Herramientas Unix [DiegoPineda + MateoTorres]
 
-**2.1. Ampliación de `utils.sh` con funciones de diagnóstico**
+**2.1. Herramientas de red implementadas**
 
-- **Propósito:** Distinguir problemas de seguridad vs problemas de infraestructura
-- **Funcionalidades agregadas:**
-  - `simple_network_check()`: Coordinador principal del diagnóstico
-  - `basic_ping_test()`: Verificación de conectividad básica con ping
-  - `basic_dns_test()`: Verificación de resolución DNS con nslookup
-  - `show_network_info()`: Información de gateway y DNS configurado usando ip route
+- **Propósito:** Distinguir problemas de seguridad vs problemas de infraestructura de red
+- **Herramientas Unix integradas:**
+  - `ping`: Verificación de conectividad básica ICMP
+  - `nslookup`: Resolución DNS alternativa y diagnóstico
+  - `ip route show default`: Verificación de gateway y rutas
+  - `ss -tuln`: Análisis de puertos activos localmente
+  - `nc` (netcat): Test de conectividad a puertos específicos
 
-**Flujo de diagnóstico implementado:**
+**2.2. Funciones de diagnóstico en `utils.sh`**
 
-1. Check HTTP/DNS/TLS falla
-2. Se ejecuta `simple_network_check()`
-3. Test de ping: ¿hay conectividad básica?
-   - SÍ → Problema de aplicación/certificado
-   - NO → Problema de red/DNS
-4. Test de DNS: ¿resuelve el dominio?
-5. Generación de archivo de diagnóstico con conclusiones
+```bash
+# Función principal de coordinación
+simple_network_check() {
+    local target_host="$1"
+    local failed_check="$2"
+    # Lógica de diagnóstico escalonado
+}
 
-**Prueba con dominio inexistente:**
+# Test de conectividad con ping
+basic_ping_test() {
+    ping -c 2 -W 3 "$host" >> "$diag_file"
+}
+
+# Verificación de DNS con nslookup
+basic_dns_test() {
+    nslookup "$host" >> "$diag_file"
+}
+
+# Información de red local con ip
+show_network_info() {
+    ip route show default >> "$diag_file"
+    cat /etc/resolv.conf | grep nameserver >> "$diag_file"
+}
+```
+
+**2.3. Lógica de diagnóstico implementada:**
+
+1. Check HTTP/DNS/TLS falla → activar diagnóstico
+2. `ping`: ¿hay conectividad básica?
+   - SÍ → problema de aplicación/certificado
+   - NO → problema de red/DNS
+3. `nslookup`: ¿resuelve el dominio?
+   - SÍ → problema de conectividad/firewall
+   - NO → problema de DNS/dominio inexistente
+4. `ip route`: ¿está configurado el gateway?
+5. Generar archivo diagnóstico con conclusiones
+
+**Prueba con herramientas de red:**
 
 ```bash
 TARGET_URL="https://sitio-que-no-existe-123456.com" ./security_checker.sh
 ```
 
-**Salida diagnóstico:**
+**Salida con diagnóstico de red:**
 
 ```
-[ERROR] No se pudo obtener respuesta HTTP de 'https://sitio-que-no-existe-123456.com'.
 [WARN] Check http falló para sitio-que-no-existe-123456.com
 [INFO] Verificando si es problema de red...
 [ERROR] Sin conectividad básica
 [ERROR] Problema de DNS - verificar configuración
 [INFO] Diagnóstico guardado en: ../out/diagnostic_abc123.txt
+```
+
+**Contenido del archivo de diagnóstico:**
+
+```
+=== TEST DE CONECTIVIDAD ===
+PING sitio-que-no-existe-123456.com (sitio-que-no-existe-123456.com): 56 data bytes
+ping: cannot resolve sitio-que-no-existe-123456.com: Unknown host
+PING: Falló
+
+=== TEST DE DNS ===
+Server: 8.8.8.8
+Address: 8.8.8.8#53
+** server can't find sitio-que-no-existe-123456.com: NXDOMAIN
+DNS: No resuelve
+
+CONCLUSIÓN: Problema de red/infraestructura
 ```
 
 ---
@@ -147,149 +195,154 @@ TARGET_URL="https://httpbin.org/status/500" ./security_checker.sh
 
 ---
 
-### 4. Variables de Entorno [DiegoPineda]
+### 4. Variables de Entorno y Configuración [DiegoPineda]
 
-**4.1. Implementación de configuración `.env`**
+**4.1. Implementación de configuración centralizada (.env)**
 
-- **Propósito:** Configuración centralizada y flexible del pipeline
+- **Propósito:** Configuración flexible y reutilizable del pipeline
 - **Variables implementadas:**
-  - `TARGET_URL`: URL objetivo principal
-  - `HTTP_TIMEOUT`: Timeout para requests HTTP y TLS
-  - `DNS_SERVER`: Servidor DNS específico para consultas
-  - `TLS_PORT`: Puerto TLS configurable (default 443)
-
-**4.2. Actualización de `dns_checker.sh` para usar DNS_SERVER**
-
-- Modificación para usar servidor DNS específico: `dig "@$dns_server" A "$domain"`
-- Diagnóstico mejorado con DNS alternativo cuando falla el principal
-- Comparación automática entre DNS configurado vs DNS del sistema
-
-**4.3. Mejora en `load_env()` para prioridad de variables**
-
-- Variables de línea de comandos tienen prioridad sobre .env
-- Compatibilidad con Makefile: `TARGET_URL=https://ejemplo.com make run`
-
-**Configuración .env final:**
 
 ```bash
-TARGET_URL="https://www.google.com"
-HTTP_TIMEOUT="30"
-TLS_PORT="443"
-DNS_SERVER="8.8.8.8"
+TARGET_URL="https://www.google.com"     # URL objetivo
+HTTP_TIMEOUT="30"                       # Timeout para HTTP y TLS
+TLS_PORT="443"                         # Puerto TLS configurable
+DNS_SERVER="8.8.8.8"                  # Servidor DNS específico
 ```
 
----
+**4.2. Modificación de `load_env()` en `utils.sh`**
 
-### 5. Expansión de Tests [MateoTorres]
+- Prioridad correcta: línea de comandos > variables de entorno > .env
+- Compatibilidad con diferentes formas de ejecución
+- Logging informativo sobre origen de configuración
 
-**5.1. Nuevos tests en `test.bats`**
-
-- **Tests agregados:**
-  - Verificación de manejo de variables de entorno vs línea de comandos
-  - Detección correcta de archivos de evidencia específicos (HTTP, DNS, TLS)
-  - Verificación que HTTPS genera archivos TLS pero HTTP no
-  - Validación de generación de archivos de diagnóstico en fallos
-  - Test de integración con Makefile usando diferentes URLs
-
-**Cobertura de testing mejorada:**
+**4.3. Integración de DNS_SERVER en `dns_checker.sh`**
 
 ```bash
-bats tests/test.bats
+# Uso de servidor DNS específico desde .env
+local dns_server="${DNS_SERVER:-8.8.8.8}"
+dns_response=$(dig "@$dns_server" A "$domain" +noall +answer || true)
 ```
 
-**Salida ampliada:**
+**Beneficios implementados:**
 
-```
- ✓ Los archivos principales existen
- ✓ El script funciona con URL desde línea de comandos
- ✓ El script usa .env cuando no hay variable de entorno
- ✓ El script detecta dominios que no existen
- ✓ Se crean archivos de evidencia
- ✓ TLS check se ejecuta para sitios HTTPS
- ✓ Script genera archivos de diagnóstico cuando hay fallos
- ✓ Makefile run funciona con variable personalizada
-
-8 tests, 0 failures
-```
+- Configuración consistente entre ejecuciones
+- Facilita testing con diferentes parámetros
+- Permite uso de DNS corporativos o públicos específicos
+- Compatible con automatización y CI/CD
 
 ---
 
-### 6. Mejoras en Makefile [MateoTorres]
+### 5. Pipelines Unix y Procesamiento de Datos [DiegoPineda + MateoTorres]
 
-**6.1. Nuevos targets implementados:**
+**5.1. Herramientas Unix integradas en scripts:**
 
-- `tools`: Verificación de herramientas necesarias (curl, dig, openssl, bats)
-- `build`: Preparación de estructura de directorios y artefactos
-- `pack`: Generación de paquete distributable en dist/
-- Mejora en `clean`: Limpieza segura de out/ y dist/
+- **grep**: Búsqueda de patrones en respuestas HTTP/TLS
+- **awk**: Extracción de campos específicos (códigos HTTP, IPs DNS)
+- **sed**: Transformación de texto y limpieza de URLs
+- **cut**: División de campos en certificados TLS
+- **head/tail**: Procesamiento de líneas específicas
+- **sort/uniq**: Ordenamiento y eliminación de duplicados
+- **wc**: Conteo de registros y estadísticas
 
-**6.2. Variables configurables ampliadas:**
+**5.2. Ejemplos implementados por checker:**
 
-- `RELEASE`: Versionado para paquetes
-- Soporte para override de TARGET_URL desde línea de comandos
-
----
-
-### 7. Implementación de Servicio Systemd [MateoTorres]
-
-**7.1. Creación de `install-service.sh`**
-
-- **Propósito:** Instalación automatizada como servicio del sistema
-- **Funcionalidades:**
-  - Generación automática de archivos .service y .timer
-  - Configuración de ejecución horaria automática
-  - Integración con journalctl para logging centralizado
-  - Scripts de instalación, desinstalación y estadísticas
-
-**7.2. Configuración de monitoreo:**
-
-- Logs estructurados con `SyslogIdentifier=security-checks`
-- Timer configurable para ejecución periódica
-- Funciones de análisis de logs y generación de reportes
-
----
-
-### 8. Pipelines Unix [Conjunto]
-
-**8.1. Uso de herramientas Unix en processing:**
-
-- **http_checker.sh:** `head -n 1 | awk '{print $2}'` para extraer códigos
-- **dns_checker.sh:** `awk '{print $5}' | sort -V | uniq` para procesar IPs
-- **tls_checker.sh:** `grep | cut | sed` para parsear certificados
-- **utils.sh:** `wc -l | tr -d ' '` para contar registros
-
-**8.2. Ejemplos implementados:**
+**HTTP Checker - Extracción de código:**
 
 ```bash
-# Extracción de código HTTP
+# Pipeline para extraer código HTTP
 http_status=$(echo "$http_response" | head -n 1 | awk '{print $2}')
 
-# Análisis de IPs DNS
-ips_found=$(echo "$dns_response" | awk '{print $5}' | grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+$' | sort -V)
-
-# Conteo de registros
-record_count=$(echo "$dns_response" | wc -l | tr -d ' ')
+# Validación con expresión regular
+if [[ ! "$http_status" =~ ^[0-9]+$ ]]; then
+    log_error "Código HTTP no válido"
+fi
 ```
+
+**DNS Checker - Procesamiento de IPs:**
+
+````bash
+# Extracción y ordenamiento de IPs
+ips_found=$(echo "$dns_response" | awk '{print $5}' | \
+           grep -E '^[0-9]+\.[0-9]+\.[0-9]+\.[0-9]+
 
 ---
 
-## Documentación Técnica [MateoTorres]
+## Evidencias de Funcionamiento
 
-### 8.1. Creación de README.md completo
+### Caso Exitoso:
+```bash
+TARGET_URL="https://example.com" make run
+````
 
-- Descripción del proyecto y arquitectura
-- Casos de uso para DevOps, Seguridad y CI/CD
-- Instalación paso a paso con dependencias
-- Ejemplos de uso y interpretación de resultados
-- Troubleshooting común y consideraciones de seguridad
+**Resultado:** HTTP 200, DNS resuelve, TLS válido por 89 días
 
-### 8.2. Desarrollo de guia-ejecucion.md
+### Caso de Fallo con Diagnóstico:
 
-- Tutorial detallado desde instalación hasta uso avanzado
-- Revisión paso a paso de evidencias generadas
-- Casos de uso prácticos con ejemplos reales
-- Configuración avanzada e integración CI/CD
-- Solución específica de problemas comunes
+```bash
+TARGET_URL="https://sitio-inexistente.com" make run
+```
+
+**Resultado:** Fallo con diagnóstico automático de DNS y conectividad
+
+### Tests Completos:
+
+```bash
+make test
+```
+
+**Resultado:** 8 tests pasando, cobertura completa de funcionalidades
+
+---
+
+## Conclusiones Sprint 2
+
+### Objetivos Completados ✅
+
+- ✅ TLS checker completo con análisis de certificados
+- ✅ Diagnóstico de red para distinguir tipos de problemas
+- ✅ Variables de entorno configurables (.env)
+- ✅ Tests Bats expandidos con casos de fallo
+- ✅ Pipelines Unix básicos implementados
+- ✅ Documentación técnica completa
+
+### Funcionalidades Principales
+
+- Pipeline robusto con manejo de errores y diagnóstico
+- Configuración flexible mediante variables de entorno
+- Evidencias detalladas para auditoría y debugging
+- Integración lista para ambientes de producción
+- Tests automatizados que validan funcionalidad completa
+
+### Métricas del Proyecto
+
+- **Archivos de código:** 5 scripts principales
+- **Tests:** 8 casos cubriendo funcionalidad completa
+- **Documentación:** README + bitácoras
+- **Automatización:** Makefile
+- **Evidencias:** Generación automática con timestamps únicos | \
+   sort -V | uniq)
+
+# Conteo de registros únicos
+
+unique_ips=$(echo "$ips_found" | wc -l)
+
+````
+
+**TLS Checker - Análisis de certificados:**
+```bash
+# Extracción de fecha de expiración
+expiry_date=$(echo "$cert_info" | grep "notAfter=" | cut -d= -f2)
+
+# Cálculo de días usando pipelines
+days_left=$(( (expiry_timestamp - current_timestamp) / 86400 ))
+````
+
+**5.3. Aplicación de principios Unix:**
+
+- Una herramienta por tarea específica
+- Combinación de herramientas simples para tareas complejas
+- Procesamiento de texto eficiente con streams
+- Reutilización de código mediante pipelines
 
 ---
 
@@ -330,7 +383,6 @@ make test
 - ✅ Variables de entorno configurables (.env)
 - ✅ Tests Bats expandidos con casos de fallo
 - ✅ Pipelines Unix básicos implementados
-- ✅ Servicio systemd para automatización
 - ✅ Documentación técnica completa
 
 ### Funcionalidades Principales
@@ -338,13 +390,11 @@ make test
 - Pipeline robusto con manejo de errores y diagnóstico
 - Configuración flexible mediante variables de entorno
 - Evidencias detalladas para auditoría y debugging
-- Integración lista para ambientes de producción
 - Tests automatizados que validan funcionalidad completa
 
 ### Métricas del Proyecto
 
 - **Archivos de código:** 5 scripts principales
 - **Tests:** 8 casos cubriendo funcionalidad completa
-- **Documentación:** README + bitácoras
-- **Automatización:** Makefile
+- **Documentación:** README + guía de ejecución + bitácoras
 - **Evidencias:** Generación automática con timestamps únicos
