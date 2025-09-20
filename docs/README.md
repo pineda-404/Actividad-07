@@ -1,294 +1,89 @@
-# Integrador de Checks de Seguridad
+# PC1 - Integrador de Checks de Seguridad
 
-Pipeline automatizado para verificar aspectos críticos de seguridad en sitios web: HTTP, DNS y TLS.
+Este proyecto es la implementación de un integrador de seguridad en Bash como parte de la Primera Práctica Calificada. La herramienta ejecuta una serie de chequeos (HTTP, DNS, TLS) sobre una URL objetivo para verificar su estado y configuración de seguridad.
 
-## 📋 Descripción
+## Estructura del Proyecto
 
-Este proyecto implementa un pipeline de seguridad que ejecuta verificaciones automáticas sobre un sitio web objetivo para detectar problemas de:
+El repositorio está organizado de la siguiente manera para separar responsabilidades:
 
-- **HTTP**: Códigos de respuesta, disponibilidad del servicio
-- **DNS**: Resolución de nombres, configuración correcta
-- **TLS**: Validez de certificados, fechas de expiración
+- `src/`: Contiene todo el código fuente en scripts de Bash. El script principal es `security_checker.sh`, que utiliza los demás (`http_checker.sh`, `dns_checker.sh`) como módulos.
+- `tests/`: Contiene los casos de prueba automatizados escritos con el framework Bats.
+- `docs/`: Documentación del proyecto, incluyendo las bitácoras de cada sprint.
+- `out/`: Directorio donde se guardan los archivos de evidencia generados en cada ejecución.
+- `dist/`: Directorio para los paquetes finales del proyecto.
+- `Makefile`: Archivo de automatización para facilitar la ejecución de tareas comunes como correr el programa o ejecutar los tests.
 
-El sistema incluye diagnóstico automático de red para distinguir entre problemas de seguridad real y problemas de infraestructura.
+## Herramientas Utilizadas
 
-## 🎯 Casos de Uso
+Este proyecto se basa en herramientas estándar de la línea de comandos de Linux:
 
-### Para DevOps/SRE
+- **Bash:** Para la lógica de los scripts.
+- **`curl`:** Para realizar las peticiones HTTP y analizar las respuestas.
+- **`dig`:** Para las consultas DNS y la verificación de registros.
+- **`make`:** Para automatizar el flujo de trabajo.
+- **`bats`:** Para las pruebas automatizadas de los scripts.
+- **Unix Toolkit (`sed`, `awk`, `grep`):** Para procesar y extraer información de las salidas de los comandos.
 
-- Monitoreo continuo de sitios en producción
-- Detección temprana de certificados por expirar
-- Validación de configuraciones DNS
+## Cómo Usar el Proyecto
 
-### Para Equipos de Seguridad
+### 1. Prerrequisitos
 
-- Auditoría automatizada de certificados TLS
-- Verificación de disponibilidad de servicios críticos
-- Generación de evidencias para compliance
-
-### Para CI/CD Pipelines
-
-- Validación de deployments
-- Tests de seguridad en pipelines automatizados
-- Verificación post-despliegue
-
-## 🏗️ Arquitectura
-
-```
-├── src/                    # Código fuente principal
-│   ├── security_checker.sh # Script principal
-│   ├── http_checker.sh     # Verificaciones HTTP
-│   ├── dns_checker.sh      # Verificaciones DNS
-│   ├── tls_checker.sh      # Verificaciones TLS
-│   └── utils.sh            # Utilidades y diagnóstico
-├── tests/                  # Tests automatizados (Bats)
-├── out/                    # Salidas y evidencias
-├── docs/                   # Documentación
-└── .env                    # Configuración
-```
-
-## 🚀 Instalación Rápida
-
-### Prerrequisitos
+Asegúrate de tener instaladas las herramientas necesarias. En un sistema basado en Debian/Ubuntu:
 
 ```bash
-# Ubuntu/Debian
-sudo apt update
-sudo apt install curl dig openssl netcat-openbsd iproute2 bats
-
-# CentOS/RHEL
-sudo yum install curl bind-utils openssl nc iproute bats
+sudo apt update && sudo apt install curl dnsutils bats
 ```
 
-### Configuración Inicial
+````
 
-1. **Clonar y configurar:**
+### 2. Configuración
 
-```bash
-git clone https://github.com/pineda-404/PC01-DS.git
-cd PC01-DS
-cp .env.example .env
-```
+La URL a verificar se configura mediante una variable de entorno. Para desarrollo local, puedes crear un archivo `.env` en la raíz del proyecto.
 
-2. **Configurar objetivo en `.env`:**
+1.  Copia la plantilla de ejemplo:
+    ```bash
+    cp .env.example .env
+    ```
+2.  Edita el archivo `.env` con la URL que desees probar:
+    ```
+    TARGET_URL="https://example.com"
+    ```
 
-```bash
-# Editar .env
-TARGET_URL="https://mi-sitio.com"
-HTTP_TIMEOUT="30"
-DNS_SERVER="8.8.8.8"
-TLS_PORT="443"
-```
+### 3. Ejecución
 
-3. **Verificar instalación:**
+El `Makefile` proporciona los comandos principales para interactuar con el proyecto. Deben ejecutarse desde la raíz del repositorio.
 
-```bash
-make tools  # Verifica dependencias
-make test   # Ejecuta tests
-```
+- **Ejecutar los chequeos de seguridad:**
 
-## 📖 Uso
+  ```bash
+  make run
+  ```
 
-### Ejecución Básica
+  Esto usará la URL definida en el archivo `.env`. Los archivos de evidencia se guardarán en la carpeta `out/`.
 
-```bash
-# Con URL por defecto del .env
-make run
+- **Ejecutar con una URL personalizada:**
+  Puedes sobreescribir la URL desde la línea de comandos:
 
-# Con URL específica
-make run TARGET_URL="https://github.com"
+  ```bash
+  make run TARGET_URL="https://github.com"
+  ```
 
-# Ejecución directa
-cd src && ./security_checker.sh
-```
+- **Ejecutar las pruebas automatizadas:**
 
-### Casos de Ejemplo
+  ```bash
+  make test
+  ```
 
-**Sitio funcionando correctamente:**
+- **Limpiar los archivos generados:**
+  ```bash
+  make clean
+  ```
 
-```bash
-make run TARGET_URL="https://www.google.com"
-# Output: Todos los checks pasan ✅
-```
+## Flujo de Trabajo (Git)
 
-**Problema de certificado:**
+El proyecto sigue un flujo de trabajo basado en ramas:
 
-```bash
-make run TARGET_URL="https://expired.badssl.com"
-# Output: TLS check falla, pero HTTP/DNS pasan
-```
-
-**Dominio inexistente:**
-
-```bash
-make run TARGET_URL="https://sitio-que-no-existe.com"
-# Output: Todos los checks fallan + diagnóstico de DNS
-```
-
-## 📊 Interpretación de Resultados
-
-### Salida Exitosa
-
-```
-[INFO] HTTP check: Código 200 ✅
-[INFO] DNS check: 2 registro(s) encontrados ✅
-[INFO] TLS check: Certificado válido por 89 días ✅
-[OK] Todos los checks completados con éxito
-```
-
-### Salida con Errores
-
-```
-[ERROR] HTTP check: Error 500 ❌
-[INFO] DNS check: Resuelve correctamente ✅
-[INFO] TLS check: Certificado válido ✅
-[ERROR] HTTP check falló
-```
-
-### Con Diagnóstico de Red
-
-```
-[ERROR] No se pudo obtener respuesta HTTP
-[WARN] Check http falló para sitio-caido.com
-[INFO] Verificando si es problema de red...
-[ERROR] Sin conectividad básica
-[INFO] Diagnóstico guardado en: out/diagnostic_*.txt
-```
-
-## 🔍 Archivos de Evidencia
-
-Cada ejecución genera evidencias en `out/`:
-
-- `http_check_*.txt` - Respuestas HTTP completas
-- `dns_check_*.txt` - Registros DNS y análisis
-- `tls_check_*.txt` - Información de certificados
-- `diagnostic_*.txt` - Diagnósticos de red (cuando hay fallos)
-
-### Ejemplo de Evidencia HTTP
-
-```
---- Evidencia HTTP para https://github.com ---
-HTTP/2 200
-server: GitHub.com
-content-type: text/html; charset=utf-8
-strict-transport-security: max-age=31536000
-
-=== ANÁLISIS DEL CÓDIGO HTTP ===
-Código obtenido: 200
-✓ Código 200: Exitoso
-```
-
-## 🔧 Configuración Avanzada
-
-### Variables de Entorno (.env)
-
-```bash
-# URL objetivo
-TARGET_URL="https://mi-empresa.com"
-
-# Timeouts y puertos
-HTTP_TIMEOUT="30"
-TLS_PORT="443"
-
-# Servidor DNS para consultas
-DNS_SERVER="8.8.8.8"    # Google DNS
-# DNS_SERVER="1.1.1.1"  # Cloudflare DNS
-# DNS_SERVER="9.9.9.9"  # Quad9 DNS
-```
-
-### Makefile Targets
-
-```bash
-make help      # Ver todos los comandos
-make tools     # Verificar herramientas
-make build     # Preparar directorios
-make test      # Ejecutar tests Bats
-make run       # Ejecutar pipeline
-make pack      # Generar paquete distributable
-make clean     # Limpiar archivos temporales
-```
-
-## 🧪 Testing
-
-### Ejecutar Tests
-
-```bash
-# Todos los tests
-make test
-
-# Tests específicos
-bats tests/test.bats -f "archivos principales"
-
-# Con output detallado
-bats tests/test.bats -v
-```
-
-### Cobertura de Tests
-
-- ✅ Existencia de archivos principales
-- ✅ Funcionamiento con URLs válidas
-- ✅ Detección de dominios inexistentes
-- ✅ Generación correcta de evidencias
-- ✅ Manejo de variables de entorno
-- ✅ Integración con Makefile
-
-## 🚨 Troubleshooting
-
-### Problemas Comunes
-
-**Error: "curl command not found"**
-
-```bash
-# Instalar dependencias
-sudo apt install curl
-```
-
-**Error: "No se pudo obtener respuesta HTTP"**
-
-- Verificar conectividad: `ping google.com`
-- Revisar proxy/firewall corporativo
-- Comprobar archivo `out/diagnostic_*.txt`
-
-**Warning: "TTL muy bajo"**
-
-- Normal para CDNs como Cloudflare
-- Indica cambios frecuentes de DNS
-
-**Error: "Certificado expirado"**
-
-- Problema real de seguridad
-- Contactar administrador del sitio para renovación
-
-### Logs de Diagnóstico
-
-El sistema genera diagnósticos automáticos en caso de fallo:
-
-1. **Test de ping** - Conectividad básica
-2. **Test de nslookup** - Resolución DNS
-3. **Información de red local** - Gateway y configuración
-
-## 📚 Documentación Adicional
-
-- [`guia-ejecucion.md`](guia-ejecucion.md) - Guía paso a paso detallada
-- [`bitacora-sprint1.md`](bitacora-sprint1.md) - Desarrollo Sprint 1
-- [`bitacora-sprint2.md`](bitacora-sprint2.md) - Desarrollo Sprint 2
-
-## 🔒 Consideraciones de Seguridad
-
-- El pipeline NO almacena credenciales
-- Solo realiza consultas de solo lectura
-- Todas las evidencias se guardan localmente
-- Compatible con ambientes corporativos restrictivos
-
-## 📞 Soporte
-
-Para problemas o mejoras, revisar:
-
-1. Archivos de diagnóstico en `out/`
-2. Output de `make tools` para dependencias
-3. Tests con `bats tests/test.bats -v`
-
----
-
-**Versión:** Sprint 2 - Pipeline de Seguridad Integrado  
-**Licencia:** Educativo - Proyecto Académico
+- Cada integrante trabaja en su propia rama personal (ej. `rama/alumno1`).
+- Los cambios se proponen para ser integrados en la rama `develop` a través de Pull Requests.
+- Al final de cada sprint, la rama `develop` se fusiona en `main`.
+````
