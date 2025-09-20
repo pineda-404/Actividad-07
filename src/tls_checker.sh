@@ -111,7 +111,7 @@ check_cert_expiry() {
     local expiry_date="$1"
     local evidence_file="$2"
 
-    # Convertir fecha a timestamp (método simple para estudiantes)
+    # Convertir fecha a timestamp
     local expiry_timestamp
     if expiry_timestamp=$(date -d "$expiry_date" +%s 2>/dev/null); then
         local current_timestamp
