@@ -28,11 +28,14 @@ log_warn() {
 # Función simple para cargar .env
 load_env() {
     if [[ -f "../.env" ]]; then
-        source ../.env
-        log_info "Variables cargadas desde .env"
+        if [[ -z "${TARGET_URL:-}" ]]; then
+            source ../.env
+            log_info "Variables cargadas desde .env"
+        else
+            log_info "Usando TARGET_URL desde línea de comandos: $TARGET_URL"
+        fi
     fi
 }
-
 # Función simple de cleanup para trap
 cleanup() {
     log_info "Limpiando archivos temporales..."
