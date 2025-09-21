@@ -3,7 +3,7 @@
 **Proyecto:** 9 - Integrador de checks de seguridad en pipelines  
 **Equipo:** Diego Pineda García, Mateo Torres Fuero
 
-**Video Sprint 3:** [URL del video pendiente]
+**Video Sprint 3:** https://youtu.be/fsE46v--Xbs
 
 ---
 
