@@ -1,0 +1,11 @@
+* 30614db (HEAD -> main) Squash de feature-3: documentación estándar
+| * e8c6837 (feature-3) evidencia de 02-ff.log
+| * 9845406 evidencia de 01-ff.log
+|/  
+*   321d7f2 merge --no-ff de add-feature hacia main
+|\  
+| * 268ab91 (add-feature) agrega pregunta A en README.md
+| * b3d8fe0 agrega sección preguntas
+|/  
+* bf207fc (feature-1) coloca titulo en README.md
+* f1b5254 Initial commit
