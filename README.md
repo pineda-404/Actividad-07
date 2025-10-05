@@ -12,3 +12,5 @@
 
 - Crea dos ramas con cambios paralelos y **fusiónalas con `--no-ff`**.
 - **Preguntas:** ¿Qué ventajas de trazabilidad aporta? ¿Qué problemas surgen con **exceso** de merges?
+  La principal ventaja de --no-ff es que preserva explícitamente el contexto de la fusión, exigiendo que se cree un merge commit incluso cuando no es realmente necesario.
+  El exceso de merges ensucia y hace mas complicado de entender el historial de commits.
