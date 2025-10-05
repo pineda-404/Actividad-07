@@ -1,0 +1,7 @@
+*   321d7f2 (HEAD -> main) merge --no-ff de add-feature hacia main
+|\  
+| * 268ab91 (add-feature) agrega pregunta A en README.md
+| * b3d8fe0 agrega sección preguntas
+|/  
+* bf207fc (feature-1) coloca titulo en README.md
+* f1b5254 Initial commit
