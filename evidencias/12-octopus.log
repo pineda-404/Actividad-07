@@ -1,0 +1,5 @@
+* bf05b8e (HEAD -> main, feat-b, feat-a) Merge branch 'feature-validate'
+* 8da395d Resolver conflicto entre main y feature
+* 86892e5 Merge branch 'add-respuestaB'
+* 022274c Merge branch 'add-respuestaA'
+* 321d7f2 merge --no-ff de add-feature hacia main
