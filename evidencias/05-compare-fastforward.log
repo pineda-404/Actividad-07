@@ -1,0 +1,29 @@
+* 8da395d (HEAD -> main) Resolver conflicto entre main y feature
+| * 82d9e5d (feature-update) Cambio en feature
+* | 26ed833 Cambio en main
+|/  
+* 08e4519 agrega primera linea en index.html
+* 0d46835 Squash de feature-3: resuelve ejercicio C
+| * 6c8340c (feature-3) responde pregunta C de README.md
+| * b035790 agrega pregunta C a README.md
+| * 5e71a24 Merge branch 'main' into feature-3
+* | 86892e5 Merge branch 'add-respuestaB'
+| | * 5478c2b (add-respuestaB) responde pregunta B del README.md
+* | | 022274c Merge branch 'add-respuestaA'
+| |/  
+|/|   
+| | * 819ec1c (add-respuestaA) responde pregunta A del README.md
+| |/  
+|/|   
+* | 7b51f99 (add-pregunta) agrega pregunta B en el README.md
+* | 30614db Squash de feature-3: documentación estándar
+| * 396ad03 agrega evidencia de 03-squas.log
+| * e8c6837 evidencia de 02-ff.log
+| * 9845406 evidencia de 01-ff.log
+|/  
+* 321d7f2 merge --no-ff de add-feature hacia main
+| * 268ab91 (add-feature) agrega pregunta A en README.md
+| * b3d8fe0 agrega sección preguntas
+|/  
+* bf207fc (feature-1) coloca titulo en README.md
+* f1b5254 Initial commit
