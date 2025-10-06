@@ -1,1 +1,1 @@
-cambio desde feature-ffonly
+contenido modificado desde la rama main.
